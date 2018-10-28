@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Vue</title>
+</head>
+<body>
+    <script src="https:unpkg.com/vue@2.5.17"></script>
+    <div id="app">
+        <my-page>
+            <h1 slot="header">This is my page</h1>
+            <p>
+                Lorem ipsum dolor, sit amet consectetur adipisicing elit. Dignissimos et labore qui sapiente ducimus vero voluptates a sequi accusantium! Corrupti sed eaque adipisci veniam consectetur reiciendis aperiam eum dicta cum?
+            </p>
+            <p slot="footer">This is footer</p>
+        </my-page>
+    </div>
+    <script src="./app.js"></script>
+    <script>
+        var Mypage = {
+            template: `
+                <div>
+                    <header>
+                        <slot name="header"></slot>
+                    </header>
+                    <main>
+                        <slot></slot>
+                    </main>
+                    <footer>
+                        <slot name="footer"></slot>
+                    </footer>
+                </div>
+            `
+        new Vue({
+            el: '#app',
+            components: {
+                MyPage: MyPage
+            }
+        })
+            
+        }
+
+    </script>
+    
+</body>
+</html>

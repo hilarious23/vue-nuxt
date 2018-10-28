@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Vue.js SPAのサンプルアプリ</title>
+    </head>
+    <body>
+        <div id="app">
+            <nav>
+                <router-link to="/top">top page</router-link>
+                <router-link to="/users">ユーザ一覧ページ</router-link>
+                <router-link to="/users/new?redirect=true">新規ユーザ登録</router-link>
+                <router-link to="/login" v-show="!Auth.loggedIn()">ログイン</router-link>
+                <router-link to="/logout" v-show="Auth.loggedIn()">ログアウト</router-link>
+            </nav>
+            <router-view></router-view>
+        </div>
+        <script src="https://unpkg.com/vue@2.5.17"></script>
+        <script src="https://unpkg.com/vue-router@3.0.1"></script>
+        <script type="text/x-template" id="user-list">
+            <div>
+                <div class="loading" v-if="loading">Loading ...</div>
+                <div v-if="error" class="error">
+                    {{ error }}
+                </div>
+                <div v-for="user in users" :key="user.id">
+                    <router-link :to="{ path: '/users/' + user.id }">{{ user.name }}</router-link>
+                </div>
+            </div>
+        </script>
+        <script type="text/x-template" id="user-create">
+            <div>
+                <h2>Create New User</h2>
+                <div>
+                    <label>Name: </label>
+                    <input type="text" v-model="user.name">
+                </div>
+                <div>
+                    <label>Description: </label>
+                    <textarea v-model="user.description"></textarea>
+                </div>
+                <div v-if="error" class="error">
+                    {{ error }}
+                </div>
+                <div>
+                    <input type="button" @click="createUser" value="send">
+                </div>
+            </div>
+        </script>
+        <script type="text/x-template" id="login">
+            <div>
+                <h2>Login</h2>
+                <p v-if="$route.query.redirect">
+                    Please Login
+                </p>
+                <form @submit.prevent="login">
+                    <label><input v-model="email" placeholder="email"></label>
+                    <label><input v-model="pass" placeholder="password" type="password"></label><br>
+                    <button type="submit">Login</button>
+                    <p v-if="error" class="error">failed to login</p>
+                </form>
+            </div>
+        </script>
+        <script type="text/x-template" id="user-detail">
+            <div>
+                <div class="loading" v-if="loading">Loading ...</div>
+                <div v-if="error" class="error">
+                    {{ error }}
+                </div>
+                <div v-if="user">
+                    <h2>{{ user.name }}</h2>
+                    <p>{{ user.description }}</p>
+                </div>
+            </div>
+        </script>
+        <script>
+            var userData = [
+                        {
+                            id: 1,
+                            name: 'Takuya Tejima',
+                            description: 'Engineer working in South East Asia'
+                        },
+                        {
+                            id: 2,
+                            name: 'Yohei Noda',
+                            description: 'Engineer whose hobby is footsal'
+                        }
+                    ]
+
+            var getUsers = function (callback) {
+                setTimeout(function () {
+                    callback(null, userData)
+                }, 1000)
+            }
+
+            var getUser = function (userId, callback) {
+                setTimeout(function () {
+                    var filteredUsers = userData.filter(function (user) {
+                        return user.id === parseInt(userId, 10)
+                    })
+                    callback(null, filteredUsers && filteredUsers[0])
+                }, 1000)
+            }
+
+            var postUser = function (params, callback) {
+                setTimeout(function () {
+                    params.id = userData.length + 1
+                    userData.push(params)
+                    callback(null, params)
+                }, 1000)
+            }
+
+            var UserList = {
+                template: '#user-list',
+                data: function () {
+                    return {
+                        loading: false,
+                        users: function () {
+                            return []
+                        },
+                        error: null
+                    }
+                },
+                created: function () {
+                    this.fetchData()
+                },
+                watch: {
+                    '$route': 'fetchData'
+                },
+                methods: {
+                    fetchData: function () {
+                        this.loading = true
+                        getUsers((function (err, users) {
+                            this.loading = false
+                            if (err) {
+                                this.errpr = err.toString()
+                            } else {
+                                this.users = users
+                            }
+                        }).bind(this))
+                    }
+                }
+            }
+
+            var UserDetail = {
+                template: '#user-detail',
+                data: function () {
+                    return {
+                        loading: false,
+                        user: null,
+                        error: null
+                    }
+                },
+                created: function () {
+                    this.fetchData()
+                },
+                watch: {
+                    '$route': 'fetchData'
+                },
+                methods: {
+                    fetchData: function () {
+                        this.loading = true
+                        getUser(this.$route.params.userId, (function (err, user) {
+                            this.loading = false
+                            if (err) {
+                                this.errpr = err.toString()
+                            } else {
+                                this.user = user
+                            }
+                        }).bind(this))
+                    }
+                }
+            }
+
+            var UserCreate = {
+                template: '#user-create',
+                data: function () {
+                    return {
+                        sending: false,
+                        user: this.defaultUser(),
+                        error: null
+                    }
+                },
+                created: function () {
+                },
+                methods: {
+                    defaultUser: function () {
+                        return {
+                            name: '',
+                            description: ''
+                        }
+                    },
+                    createUser: function () {
+                        if (this.user.name.trim() === '') {
+                            this.error = 'Name is must'
+                            return
+                        }
+                        if (this.user.description.trim() === '') {
+                            this.error = 'Description is must'
+                            return
+                        }
+                        postUser(this.user, (function (err, user) {
+                           this.sending = false
+                           if (err) {
+                               this.error = err.toString()
+                           } else {
+                               this.error = null
+                               this.user = this.defaultUser()
+                               alert('A new user has registered')
+                               this.$router.push('/users')
+                           }
+                        }).bind(this))
+                    }
+                }
+            }
+
+            var Auth = {
+                login: function (email, pass, cb) {
+                    setTimeout(function () {
+                        if (email === 'vue@example.com' && pass === 'vue') {
+                            localStorage.token = Math.random().toString(36).substring(7)
+                            if (cb) { cb(true) }
+                        } else {
+                            if (cb) { cb(false) }
+                        }
+                    }, 0)
+                },
+
+                logout: function () {
+                    delete localStorage.token
+                },
+
+                loggedIn: function() {
+                    return !!localStorage.token
+                }
+            }
+
+            var Login = {
+                template: '#login',
+                data: function () {
+                    return {
+                        email: 'vue@example.com',
+                        pass: '',
+                        error: false
+                    }
+                },
+                methods: {
+                    login: function () {
+                        Auth.login(this.email, this.pass, (function (loggedIn) {
+                            if (!loggedIn) {
+                                this.error = true
+                            } else {
+                                this.$router.replace(this.$route.query.redirect || '/')
+                            }
+                        }).bind(this))
+                    }
+                }
+            }
+
+            var router = new VueRouter({
+                routes: [
+                    {
+                        path: '/top',
+                        component: {
+                            template: '<div>This is Top page</div>'
+                        }
+                    },
+                    {
+                        path: '/users',
+                        component: UserList
+                    },
+                    {
+                        path: '/users/new',
+                        component: UserCreate,
+                        beforeEnter: function (to, from, next) {
+                            if (!Auth.loggedIn()) {
+                                next({
+                                    path: '/login',
+                                    query: { redirect: to.fullPath }
+                                })
+                            } else {
+                                next()
+                            }
+                        }
+                    },
+                    {
+                        path: '/users/:userId',
+                        component: UserDetail
+                    },
+                    {
+                        path: '/login',
+                        component: Login
+                    },
+                    {
+                        path: '/logout',
+                        beforeEnter: function (to, from, next) {
+                            Auth.logout()
+                            next('/')
+                        }
+                    }
+                ]
+            })
+
+            var app = new Vue({
+                data: {
+                    Auth: Auth
+                },
+                router: router
+            }).$mount('#app')
+        </script>
+    </body>
+</html>
