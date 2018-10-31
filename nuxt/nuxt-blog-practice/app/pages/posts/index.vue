@@ -3,32 +3,32 @@
     el-card
       div(slot="header" class="clearfix")
         span 新着投稿
-      el-table(:data="showPosts" style="width: 100%" class="table")
+      el-table(:data="showPosts" style="width: 100%" @row-click="handleClick" class="table")
         el-table-column(prop="title" label="タイトル")
         el-table-column(prop="user.id" label="投稿者" width="180")
         el-table-column(prop="created_at" label="投稿日時" width="240")
 </template>
 
 <script>
+import moment from '~/plugins/moment'
+import { mapGetters } from 'vuex'
+
 export default {
+  async asyncData({ store }) {
+    await store.dispatch('posts/fetchPosts')
+  },
   computed: {
     showPosts() {
-      return [
-        {
-          id: '001',
-          title: 'How to develop Nuxt App',
-          body: 'lorem',
-          created_at: '2018/08/10 12:00:00',
-          user: { id: 'potato4d' }
-        },
-        {
-          id: '002',
-          title: 'develop App to Heroku',
-          body: 'lorem',
-          created_at: '2018/08/10 13:00:00',
-          user: { id: 'potato4d' }
-        }
-      ]
+      return this.posts.map(post => {
+        post.created_at = moment(post.created_at).format('YYYY/MM/DD HH:mm:ss')
+        return post
+      })
+    },
+    ...mapGetters('posts', ['posts'])
+  },
+  methods: {
+    handleClick(post) {
+      this.$router.push(`/posts/${post.id}`)
     }
   }
 }
