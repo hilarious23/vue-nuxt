@@ -34,8 +34,13 @@ module.exports = {
   ** Plugins to load before mounting the App
   */
   plugins: [
-    '@/plugins/element-ui'
+    '@/plugins/element-ui',
+    '~/assets/common.css'
   ],
+
+  router: {
+    middleware: ['auth-cookie']
+  },
 
   /*
   ** Nuxt.js modules
