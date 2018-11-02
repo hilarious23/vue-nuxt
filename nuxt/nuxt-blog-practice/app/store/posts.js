@@ -5,8 +5,7 @@ export const state = () => ({
 })
 
 export const getters = {
-  posts: (state) =>
-    state.posts.map((post) => Object.assign({ like: [] }, post))
+  posts: state => state.posts.map(post => Object.assign({ likes: [] }, post))
 }
 
 export const mutations = {

@@ -37,7 +37,7 @@ export default {
       await this.publishPost({ payload })
       this.$router.push('/posts')
     },
-    // ...mapActions('users', ['updateUser']),
+    ...mapActions('users', ['updateUser']),
     ...mapActions('posts', ['publishPost'])
   }
 }
